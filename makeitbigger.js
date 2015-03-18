@@ -1,36 +1,105 @@
-(function() {
-	var $inflate = $('[data-makeitbigger]'),
-			items = [],
-			documentHeight = $(document).height();
+'use strict';
 
-	$inflate.each(function(el) {
-	  var $el = $(this);
-	  
-	  items.push({
-	    $el: $el,
-	    property: $el.data('property'),
-	    initialValue: parseInt( $el.css( $el.data('property') )),
-	    maxValue: $el.data('max')
-	  });
-	});
+(function($) {
+	var documentHeight = $(document).height();
+
+	window.MakeItBiggerItems = [];
+
+	/**
+	 * [MakeItBigger description]
+	 * @param jQuery element  $el
+	 * @param object options
+	 */
+	var MakeItBigger = function( $el, options ) {
+
+		var _self = this;
+
+		_self.$el = $el;
+
+		this.options = _self.getOptions( options );
+
+		console.log( this.options );
+		window.MakeItBiggerItems.push( this.options );
+
+		MakeItBiggerResizeProperties();
+
+		return this;
+	};
+
+	MakeItBigger.prototype._getDataAttribute = function( property, defaultValue ) {
+		var val = this.$el.data( property );
+
+		if (!val)
+			return defaultValue;
+
+		return val;
+	}
+
+	MakeItBigger.prototype.getOptions = function( options ) {
+		var _self = this,
+			opts = jQuery.extend({
+			$el: _self.$el,
+			property: _self._getDataAttribute('property', 'opacity' ),
+			minValue: _self._getDataAttribute('valueMin', 0 ),
+			maxValue: _self._getDataAttribute('valueMax', 1),
+			transitionStart: _self._getDataAttribute('transitionStart', 0),
+			transitionEnd: _self._getDataAttribute('transitionEnd', documentHeight)
+		}, options );
+
+		_self.originalOptions = opts;
+
+		for ( var prop in opts) {
+			if (opts.hasOwnProperty(prop)) {
+				if ( typeof opts[prop] === 'function')  {
+					opts[prop] = opts[prop]();
+				}
+			}
+		}
+
+		return opts;
+	};
 
 	function map(value, istart, istop, ostart, ostop) {
 		return ostart + (ostop - ostart) * ((value - istart) / (istop - istart));
 	}
 
-	// Setup
-	function resizeProperties() {
+	window.MakeItBiggerResizeProperties = function() {
 		var scrollTop = $(document).scrollTop();
 
-		for (var i = 0; i < items.length; i++ ) {
-			var item = items[i],
-			     newValue = map(scrollTop, 0, documentHeight, item.initialValue, item.maxValue );
-			 
-			if (newValue < item.maxValue && scrollTop > 0 && newValue > item.initialValue )
-			   item.$el.css(item.property, newValue);
+		for (var i = 0; i < window.MakeItBiggerItems.length; i++ ) {
+			var item = window.MakeItBiggerItems[i],
+			     newValue = map(scrollTop, item.transitionStart, item.transitionEnd, item.minValue, item.maxValue ),
+			     negativeScale = item.minValue > item.maxValue;
+
+			if ( scrollTop < item.transitionStart || scrollTop > item.transitionEnd )
+				return;
+			
+			if (
+					(newValue < item.maxValue && scrollTop >= 0 && newValue >= item.minValue)
+						||
+					(negativeScale && newValue <= item.minValue && scrollTop > 0 && newValue >= item.maxValue)
+				) {
+				item.$el.css(item.property, newValue);
+			}
 		}
 	}
 
-	resizeProperties();
-	$(document).on('scroll', resizeProperties );
-}());
+	/**
+	 * Fetch up declared elements
+	 * @type {[type]}
+	 */
+	var $domDeclared = $('[data-makeitbigger]');
+
+	$domDeclared.each(function() {
+	  var $el = $(this),
+	  item = new MakeItBigger( $el );
+
+	});
+
+	MakeItBiggerResizeProperties();
+
+	$(document).on('scroll', MakeItBiggerResizeProperties );
+
+	window.MakeItBigger = MakeItBigger;
+
+}(jQuery));

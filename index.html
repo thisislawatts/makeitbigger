@@ -7,22 +7,65 @@
   <title>Make It Bigger</title>
 
   <style>
-    h1 {
-      font-size: 2em;
-      font-family: sans-serif;
+
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    div {
       position: fixed;
       top: 0;
       left: 0;
+      padding: 1em;
+    }
+
+    h1 {
+      font-size: 2em;
     }
 
     body {
       height: 200em;
+      font-family: sans-serif;
+    }
+
+    pre {
+      display: block;
+      background: rgba( 150, 150, 150,.1);
+      padding: 0.7em;
+      margin: .5em 0 1.5em;
+    }
+
+    code {
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <h1 data-makeitbigger data-property="font-size" data-max="1000">Hello World</h1>
+  <div>
+    <h1 data-makeitbigger data-property="font-size" data-value-min="0" data-value-max="250" data-transition-start data-transition-end>Hello World</h1>
+    Declarative
+    <pre><code>&lt;h1 data-makeitbigger data-property=&quot;font-size&quot; data-value-min=&quot;0&quot; data-value-max=&quot;250&quot; data-transition-start data-transition-end&gt;Hello World&lt;/h1&gt;</code></pre>
+
+    <h2>Foo bar</h2>
+    Programatically
+    <pre><code>new MakeItBigger( jQuery('h2'), {
+  property: 'opacity',
+  transitionStart: 0,
+  transitionEnd: 200
+} );</code></pre>
+
+  </div>
   <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
-  <script src="makeitbigger.js" async defer></script>
+  <script src="makeitbigger.js"></script>
+  <script>
+new MakeItBigger( jQuery('h2'), {
+  property: 'opacity',
+  transitionStart: 0,
+  transitionEnd: function() {
+    return 500;
+  }
+} );
+  </script>
 </body>
 </html>
